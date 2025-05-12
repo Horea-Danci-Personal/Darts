@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>Darts Acapulco</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 30px;
+      background: linear-gradient(135deg, #1e1e2f, #3e3e55);
+      color: #fff;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 3em;
+      color: #ffeb3b;
+    }
+    input[type="text"], input[type="number"] {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1.2em;
+    }
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      font-size: 1.1em;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .player {
+      margin-bottom: 30px;
+      background-color: #2e2e40;
+      padding: 20px;
+      border-radius: 10px;
+      font-size: 1.4em;
+    }
+    .score {
+      font-weight: bold;
+      color: #ffeb3b;
+    }
+    .control-panel {
+      margin-bottom: 30px;
+      text-align: center;
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Darts Acapulco</h1>
+
+  <div class="control-panel">
+    <label for="playerNames">Nume jucători (separat prin virgulă):</label><br>
+    <input type="text" id="playerNames" placeholder="Ex: Grasu, Alin">
+    <button onclick="startGame()">Start</button>
+    <button onclick="resetGame()">Reset</button>
+  </div>
+
+  <div id="gameArea"></div>
+
+  <audio id="lowSound" src="low.mp3"></audio>
+  <audio id="highSound" src="high.mp3"></audio>
+  <audio id="winSound" src="win.mp3"></audio>
+
+  <script>
+    const START_SCORE = 501;
+    const LOW_THRESHOLD = 30;
+    const HIGH_THRESHOLD = 50;
+
+    let players = [];
+    let gameOver = false;
+
+    function startGame() {
+      const input = document.getElementById("playerNames").value;
+      const names = input.split(",").map(name => name.trim()).filter(name => name);
+      players = names.map(name => ({ name, score: START_SCORE }));
+      gameOver = false;
+      renderPlayers();
+    }
+
+    function resetGame() {
+      document.getElementById("playerNames").value = "";
+      document.getElementById("gameArea").innerHTML = "";
+      players = [];
+      gameOver = false;
+    }
+
+    function renderPlayers() {
+      const gameArea = document.getElementById("gameArea");
+      gameArea.innerHTML = "";
+
+      players.forEach((player, index) => {
+        const div = document.createElement("div");
+        div.className = "player";
+        div.innerHTML = `
+          <div><strong>${player.name}</strong> - Scor: <span class="score" id="score-${index}">${player.score}</span></div>
+          <input type="number" id="input-${index}" placeholder="Puncte">
+          <button onclick="submitPoints(${index})">Trimite</button>
+        `;
+        gameArea.appendChild(div);
+      });
+    }
+
+    function submitPoints(index) {
+      if (gameOver) return;
+
+      const input = document.getElementById(`input-${index}`);
+      const points = parseInt(input.value);
+      if (isNaN(points)) return;
+
+      const player = players[index];
+      player.score -= points;
+      if (player.score < 0) player.score = 0;
+      document.getElementById(`score-${index}`).innerText = player.score;
+
+      if (points <= LOW_THRESHOLD) {
+        document.getElementById("lowSound").play();
+      } else if (points >= HIGH_THRESHOLD) {
+        document.getElementById("highSound").play();
+      }
+
+      if (player.score === 0 && !gameOver) {
+        gameOver = true;
+        alert(`${player.name} a câștigat!`);
+        document.getElementById("winSound").play();
+      }
+
+      input.value = "";
+    }
+  </script>
+</body>
+</html>
