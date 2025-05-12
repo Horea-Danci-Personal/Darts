@@ -16,7 +16,7 @@
       font-size: 3em;
       color: #ffeb3b;
     }
-    input[type="text"], input[type="number"] {
+    input[type="text"], input[type="number"], select {
       padding: 10px;
       margin: 5px;
       border-radius: 8px;
@@ -59,7 +59,14 @@
 
   <div class="control-panel">
     <label for="playerNames">Nume jucători (separat prin virgulă):</label><br>
-    <input type="text" id="playerNames" placeholder="Ex: Grasu, Alin">
+    <input type="text" id="playerNames" placeholder="Ex: Grasu, Alin"><br><br>
+
+    <label for="startScore">Scor de start:</label>
+    <select id="startScore">
+      <option value="301">301</option>
+      <option value="501" selected>501</option>
+    </select><br>
+
     <button onclick="startGame()">Start</button>
     <button onclick="resetGame()">Reset</button>
   </div>
@@ -71,15 +78,16 @@
   <audio id="winSound" src="win.mp3"></audio>
 
   <script>
-    const START_SCORE = 501;
     const LOW_THRESHOLD = 30;
     const HIGH_THRESHOLD = 50;
 
     let players = [];
     let gameOver = false;
+    let START_SCORE = 501;
 
     function startGame() {
       const input = document.getElementById("playerNames").value;
+      START_SCORE = parseInt(document.getElementById("startScore").value);
       const names = input.split(",").map(name => name.trim()).filter(name => name);
       players = names.map(name => ({ name, score: START_SCORE }));
       gameOver = false;
@@ -88,6 +96,7 @@
 
     function resetGame() {
       document.getElementById("playerNames").value = "";
+      document.getElementById("startScore").value = "501";
       document.getElementById("gameArea").innerHTML = "";
       players = [];
       gameOver = false;
@@ -101,40 +110,51 @@
         const div = document.createElement("div");
         div.className = "player";
         div.innerHTML = `
-          <div><strong>${player.name}</strong> - Scor: <span class="score" id="score-${index}">${player.score}</span></div>
-          <input type="number" id="input-${index}" placeholder="Puncte">
-          <button onclick="submitPoints(${index})">Trimite</button>
+          <div><strong>${player.name}</strong> - Scor: 
+            <span class="score" id="score-${index}">${player.score}</span>
+          </div>
+          <div>
+            Aruncări: <input type="text" id="throws-${index}" placeholder=" ">
+            <button onclick="submitThrows(${index})">Trimite</button>
+          </div>
         `;
         gameArea.appendChild(div);
       });
     }
 
-    function submitPoints(index) {
-      if (gameOver) return;
+    function submitThrows(index) {
+  if (gameOver) return;
 
-      const input = document.getElementById(`input-${index}`);
-      const points = parseInt(input.value);
-      if (isNaN(points)) return;
+  const input = document.getElementById(`throws-${index}`).value.trim();
+  const values = input.split(" ").map(v => parseInt(v)).filter(v => !isNaN(v));
+  
+  if (values.length !== 3) {
+    alert("Te rog introdu exact 3 aruncări, separate prin spațiu.");
+    return;
+  }
 
-      const player = players[index];
-      player.score -= points;
-      if (player.score < 0) player.score = 0;
-      document.getElementById(`score-${index}`).innerText = player.score;
+  const total = values.reduce((a, b) => a + b, 0);
+  const player = players[index];
+  player.score -= total;
+  if (player.score < 0) player.score = 0;
 
-      if (points <= LOW_THRESHOLD) {
-        document.getElementById("lowSound").play();
-      } else if (points >= HIGH_THRESHOLD) {
-        document.getElementById("highSound").play();
-      }
+  document.getElementById(`score-${index}`).innerText = player.score;
 
-      if (player.score === 0 && !gameOver) {
-        gameOver = true;
-        alert(`${player.name} a câștigat!`);
-        document.getElementById("winSound").play();
-      }
+  if (total <= LOW_THRESHOLD) {
+    document.getElementById("lowSound").play();
+  } else if (total >= HIGH_THRESHOLD) {
+    document.getElementById("highSound").play();
+  }
 
-      input.value = "";
-    }
+  if (player.score === 0 && !gameOver) {
+    gameOver = true;
+    alert(`${player.name} a câștigat!`);
+    document.getElementById("winSound").play();
+  }
+
+  document.getElementById(`throws-${index}`).value = "";
+}
+
   </script>
 </body>
 </html>
